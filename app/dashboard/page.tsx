@@ -10,9 +10,9 @@ import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
 export const dynamic = 'force-dynamic'
+
 export default function DashboardPage() {
   const router = useRouter()
-  const supabase = createClient()
 
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState<any>(null)
@@ -32,6 +32,8 @@ export default function DashboardPage() {
 
   const fetchUserProfile = async () => {
     setLoading(true)
+    const supabase = createClient()
+    
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
@@ -39,7 +41,6 @@ export default function DashboardPage() {
       return
     }
 
-    // Fetch user profile to check role
     const { data: profileData } = await supabase
       .from('profiles')
       .select('*')
@@ -57,9 +58,8 @@ export default function DashboardPage() {
     setLoading(false)
   }
 
-  // --- STUDENT FUNCTIONS ---
   const loadStudentData = async (studentId: string) => {
-    // Get recent attendance logs
+    const supabase = createClient()
     const { data: logs } = await supabase
       .from('attendance_logs')
       .select('*')
@@ -67,13 +67,12 @@ export default function DashboardPage() {
       .order('created_at', { ascending: false })
 
     setAttendanceLogs(logs || [])
-
-    // Check if currently clocked in (time_out is null)
     const ongoing = logs?.find((log) => log.time_out === null)
     setActiveLog(ongoing || null)
   }
 
   const handleClockIn = async () => {
+    const supabase = createClient()
     const { error } = await supabase.from('attendance_logs').insert([
       { student_id: profile.id, time_in: new Date().toISOString() },
     ])
@@ -82,6 +81,7 @@ export default function DashboardPage() {
 
   const handleClockOut = async () => {
     if (!activeLog) return
+    const supabase = createClient()
     const { error } = await supabase
       .from('attendance_logs')
       .update({ time_out: new Date().toISOString() })
@@ -94,6 +94,7 @@ export default function DashboardPage() {
     e.preventDefault()
     if (!tasksSummary || !hoursRendered) return
 
+    const supabase = createClient()
     const { error } = await supabase.from('daily_reports').insert([
       {
         student_id: profile.id,
@@ -109,8 +110,8 @@ export default function DashboardPage() {
     }
   }
 
-  // --- TEACHER / SUPERVISOR FUNCTIONS ---
   const loadTeacherData = async () => {
+    const supabase = createClient()
     const { data: reports } = await supabase
       .from('daily_reports')
       .select(`
@@ -127,6 +128,7 @@ export default function DashboardPage() {
   }
 
   const toggleApproval = async (reportId: string, currentStatus: boolean) => {
+    const supabase = createClient()
     const { error } = await supabase
       .from('daily_reports')
       .update({ is_approved: !currentStatus })
@@ -136,6 +138,7 @@ export default function DashboardPage() {
   }
 
   const handleSignOut = async () => {
+    const supabase = createClient()
     await supabase.auth.signOut()
     router.push('/login')
   }
@@ -246,7 +249,9 @@ export default function DashboardPage() {
                 <TableBody>
                   {allReports.map((report) => (
                     <TableRow key={report.id}>
-                      <TableCell className="font-medium">{report.profiles?.full_name}</TableCell>
+                      <TableCell className="font-medium">
+                        {(report.profiles as any)?.full_name || 'Unknown Student'}
+                      </TableCell>
                       <TableCell>{report.date}</TableCell>
                       <TableCell>{report.tasks_summary}</TableCell>
                       <TableCell>{report.hours_rendered} hrs</TableCell>
