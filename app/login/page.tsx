@@ -8,9 +8,11 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 
+// Tell Next.js not to statically pre-render this page during build time
+export const dynamic = 'force-dynamic'
+
 export default function AuthPage() {
   const router = useRouter()
-  const supabase = createClient()
 
   const [isLogin, setIsLogin] = useState(true)
   const [loading, setLoading] = useState(false)
@@ -27,6 +29,9 @@ export default function AuthPage() {
     setLoading(true)
     setErrorMsg('')
 
+    // Create client instance dynamically when form is submitted
+    const supabase = createClient()
+
     try {
       if (isLogin) {
         // --- LOG IN ---
@@ -36,7 +41,6 @@ export default function AuthPage() {
         })
         if (error) throw error
         
-        // Redirect to dashboard on successful login
         router.push('/dashboard')
       } else {
         // --- SIGN UP ---
