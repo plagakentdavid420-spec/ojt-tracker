@@ -8,7 +8,26 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 
-// Tell Next.js not to statically pre-render this page during build time
+async function handleSubmit(e: React.FormEvent) {
+  e.preventDefault();
+
+  const response = await fetch("/api/send-email", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      to: "recipient@example.com",
+      subject: "Hello from Vercel!",
+      message: "This email was sent via Nodemailer on Vercel.",
+    }),
+  });
+
+  const data = await response.json();
+  if (data.success) {
+    alert("Email sent!");
+  } else {
+    alert("Failed: " + data.error);
+  }
+}
 export const dynamic = 'force-dynamic'
 
 export default function AuthPage() {
